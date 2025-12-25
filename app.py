@@ -2,15 +2,30 @@ import streamlit as st
 from gtts import gTTS
 import base64
 
-st.title("📢 Village AI Voice Assistant")
-st.header("ग्रामीण एआई सहायक")
+# Page Config
+st.set_page_config(page_title="Village AI", page_icon="🌾")
 
-if st.button('🔊 Listen / सुनें'):
-    msg = "नमस्ते, मैं आपका ग्रामीण एआई सहायक हूं।"
-    tts = gTTS(text=msg, lang='hi')
-    tts.save("s.mp3")
-    with open("s.mp3", "rb") as f:
+st.title("🌾 Village AI Smart Assistant")
+st.header("ग्रामीण एआई स्मार्ट सहायक")
+
+# 1. User Input Box
+user_query = st.text_input("Ask a question (e.g., How to save water? / पानी कैसे बचाएं?):")
+
+# 2. Function to speak
+def speak(text):
+    tts = gTTS(text=text, lang='hi')
+    tts.save("response.mp3")
+    with open("response.mp3", "rb") as f:
         data = f.read()
     b64 = base64.b64encode(data).decode()
-    st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
-    st.success(msg)
+    audio_html = f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">'
+    st.markdown(audio_html, unsafe_allow_html=True)
+
+# 3. Logic to answer
+if st.button('Get Answer / उत्तर प्राप्त करें'):
+    if user_query:
+        response = f"आपने पूछा: {user_query}। मैं आपकी सहायता करने के लिए यहाँ हूँ।"
+        st.info(response)
+        speak(response)
+    else:
+        st.warning("Please enter a question first! / कृपया पहले एक प्रश्न पूछें!")

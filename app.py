@@ -2,6 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS
 import base64
+from PIL import Image
 
 # Connect to Gemini 2.5
 if "GEMINI_API_KEY" in st.secrets:
@@ -10,23 +11,18 @@ if "GEMINI_API_KEY" in st.secrets:
 else:
     st.error("API Key missing!")
 
-st.set_page_config(page_title="Multi-Language Village AI", page_icon="🌾")
+st.set_page_config(page_title="Village AI Expert", page_icon="🌾")
 
-# --- SIDEBAR FOR SETTINGS ---
-st.sidebar.title("Settings / सेटिंग्स")
+# --- SIDEBAR ---
+st.sidebar.title("Settings")
 language_choice = st.sidebar.selectbox(
-    "Choose Language / भाषा चुनें",
+    "Choose Language",
     ("Hindi", "English", "Marathi", "Telugu", "Tamil", "Kannada", "Bengali")
 )
 
-# Mapping languages to gTTS codes
-lang_codes = {
-    "Hindi": "hi", "English": "en", "Marathi": "mr", 
-    "Telugu": "te", "Tamil": "ta", "Kannada": "kn", "Bengali": "bn"
-}
+lang_codes = {"Hindi": "hi", "English": "en", "Marathi": "mr", "Telugu": "te", "Tamil": "ta", "Kannada": "kn", "Bengali": "bn"}
 
 st.title("🌾 Village AI Smart Expert")
-st.write(f"Currently helping you in: **{language_choice}**")
 
 def speak(text, lang_code):
     try:
@@ -39,23 +35,29 @@ def speak(text, lang_code):
     except:
         pass
 
-user_q = st.text_input("Ask your question here / अपना प्रश्न यहाँ लिखें:")
+# --- TABBED INTERFACE ---
+tab1, tab2 = st.tabs(["💬 Ask a Question", "📸 Plant Doctor (Camera)"])
 
-if st.button("Get Answer"):
-    if user_q:
-        with st.spinner(f"Thinking in {language_choice}..."):
-            try:
-                # We tell the AI which language to use based on the selection
-                prompt = f"You are a village expert. Answer this question simply in {language_choice}: {user_q}"
-                response = model.generate_content(prompt)
-                
-                answer = response.text
-                st.success(answer)
-                
-                # Speak in the selected language
-                speak(answer, lang_codes[language_choice])
-                
-            except Exception as e:
-                st.error(f"Error: {e}")
-    else:
-        st.warning("Please type a question.")
+with tab1:
+    user_q = st.text_input("Type your question:")
+    if st.button("Get Answer"):
+        if user_q:
+            with st.spinner("Thinking..."):
+                response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
+                st.success(response.text)
+                speak(response.text, lang_codes[language_choice])
+
+with tab2:
+    st.write("Take a photo of a sick plant or pest to get help.")
+    img_file = st.camera_input("Take a Photo")
+    
+    if img_file:
+        img = Image.open(img_file)
+        st.image(img, caption="Uploaded Image", use_container_width=True)
+        
+        if st.button("Identify Problem"):
+            with st.spinner("Analyzing Image..."):
+                # Sending both image and text to Gemini
+                response = model.generate_content([f"Identify the plant problem in this image and suggest a solution in {language_choice}.", img])
+                st.success(response.text)
+                speak(response.text, lang_codes[language_choice])

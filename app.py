@@ -7,7 +7,7 @@ import base64
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-1.5-flash')
+       model = genai.GenerativeModel('gemini-pro')
     else:
         st.error("API Key not found in Secrets! Please check Step 1.")
 except Exception as e:

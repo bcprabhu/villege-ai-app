@@ -1,48 +1,40 @@
 import streamlit as st
+import google.generativeai as genai
 from gtts import gTTS
 import base64
 
-# Page styling
-st.set_page_config(page_title="Village AI", page_icon="🌾")
-st.title("🌾 Village AI Smart Assistant")
-st.header("ग्रामीण एआई स्मार्ट सहायक")
+# This part connects to your saved Secret Key
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
+else:
+    st.error("API Key not found in Secrets!")
 
-# A simple "Knowledge Brain" for the village
-knowledge_base = {
-    "water": "नदियों और तालाबों को साफ रखें। वर्षा जल संचयन (Rainwater harvesting) अपनाएं।",
-    "crop": "मिट्टी की जांच कराएं और जैविक खाद का उपयोग करें।",
-    "health": "साफ पानी पिएं और अपने आसपास स्वच्छता बनाए रखें।",
-    "default": "यह एक बहुत अच्छा प्रश्न है। हमें इसके बारे में और विस्तार से चर्चा करनी चाहिए।"
-}
+st.set_page_config(page_title="Village AI Expert", page_icon="🌾")
+st.title("🌾 Village AI Smart Expert")
+st.header("ग्रामीण एआई स्मार्ट विशेषज्ञ")
 
-# 1. User Input
-user_query = st.text_input("Ask about crops, water, or health / खेती, पानी या स्वास्थ्य के बारे में पूछें:")
-
-# 2. Voice Function
 def speak(text):
     tts = gTTS(text=text, lang='hi')
-    tts.save("response.mp3")
-    with open("response.mp3", "rb") as f:
+    tts.save("voice.mp3")
+    with open("voice.mp3", "rb") as f:
         data = f.read()
     b64 = base64.b64encode(data).decode()
-    audio_html = f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">'
-    st.markdown(audio_html, unsafe_allow_html=True)
+    st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
 
-# 3. Smart Logic
-if st.button('Get Expert Advice / सलाह प्राप्त करें'):
-    if user_query:
-        # Simple keyword matching to simulate an AI brain
-        query_lower = user_query.lower()
-        if "पानी" in query_lower or "water" in query_lower:
-            answer = knowledge_base["water"]
-        elif "खेती" in query_lower or "crop" in query_lower:
-            answer = knowledge_base["crop"]
-        elif "स्वास्थ्य" in query_lower or "health" in query_lower:
-            answer = knowledge_base["health"]
-        else:
-            answer = knowledge_base["default"]
-            
-        st.success(f"AI: {answer}")
-        speak(answer)
+user_q = st.text_input("Ask any question / कोई भी प्रश्न पूछें:", placeholder="जैसे: जैविक खेती कैसे करें?")
+
+if st.button("Get Expert Answer / जवाब पाएं"):
+    if user_q:
+        try:
+            with st.spinner("AI is thinking..."):
+                # This line asks the REAL Google Gemini AI for an answer
+                response = model.generate_content(f"You are a helpful village assistant. Answer this briefly in simple Hindi: {user_q}")
+                answer = response.text
+                
+                st.success(answer)
+                speak(answer)
+        except Exception as e:
+            st.error("I'm having trouble connecting to my global brain. Please refresh.")
     else:
-        st.warning("Please type a question! / कृपया प्रश्न लिखें!")
+        st.warning("Please type a question first.")

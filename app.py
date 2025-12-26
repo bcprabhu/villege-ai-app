@@ -3,13 +3,14 @@ import google.generativeai as genai
 from gtts import gTTS
 import base64
 
-# Connect to Gemini safely using Secrets
+# Connect to Gemini
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-       model = genai.GenerativeModel('gemini-pro')
+        # USING THE STABLE 'gemini-pro' MODEL
+        model = genai.GenerativeModel('gemini-pro')
     else:
-        st.error("API Key not found in Secrets! Please check Step 1.")
+        st.error("API Key not found in Secrets!")
 except Exception as e:
     st.error(f"Setup Error: {e}")
 
@@ -24,9 +25,9 @@ def speak(text):
     b64 = base64.b64encode(data).decode()
     st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
 
-user_q = st.text_input("Ask any question / कोई भी प्रश्न पूछें:")
+user_q = st.text_input("Ask about farming or health / खेती या स्वास्थ्य के बारे में पूछें:")
 
-if st.button("Get Expert Answer / जवाब पाएं"):
+if st.button("Get Expert Answer"):
     if user_q:
         with st.spinner("AI is thinking..."):
             try:
@@ -36,7 +37,6 @@ if st.button("Get Expert Answer / जवाब पाएं"):
                 st.success(answer)
                 speak(answer)
             except Exception as e:
-                # This will tell us the EXACT problem (e.g., "Invalid Key" or "Quota Exceeded")
                 st.error(f"Actual Error: {e}")
     else:
         st.warning("Please type a question.")

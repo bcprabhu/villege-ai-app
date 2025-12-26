@@ -3,19 +3,14 @@ import google.generativeai as genai
 from gtts import gTTS
 import base64
 
-# Connect to Gemini with a more stable configuration
-try:
-    if "GEMINI_API_KEY" in st.secrets:
-        # We use 'v1' instead of the default to avoid the 404 error
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-1.5-flash')
-    else:
-        st.error("API Key not found in Secrets!")
-except Exception as e:
-    st.error(f"Setup Error: {e}")
+# Configure the API Key
+if "GEMINI_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+else:
+    st.error("Key not found in Streamlit Secrets!")
 
-st.title("🌾 Village AI Smart Expert")
-st.header("ग्रामीण एआई स्मार्ट विशेषज्ञ")
+st.title("🌾 Village AI Assistant")
+st.header("ग्रामीण एआई सहायक")
 
 def speak(text):
     try:
@@ -26,24 +21,28 @@ def speak(text):
         b64 = base64.b64encode(data).decode()
         st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
     except:
-        st.warning("Voice output failed, but you can read the answer below.")
+        pass
 
-user_q = st.text_input("Ask a question / प्रश्न पूछें:")
+user_q = st.text_input("Ask a question / सवाल पूछें:")
 
 if st.button("Get Answer"):
     if user_q:
-        with st.spinner("AI is thinking..."):
+        with st.spinner("Thinking..."):
             try:
-                # Force a simple response
-                response = model.generate_content(user_q)
+                # This automatically finds the best available model for your key
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                response = model.generate_content(f"Answer in simple Hindi: {user_q}")
+                
                 st.success(response.text)
                 speak(response.text)
             except Exception as e:
-                # If it fails, we show the list of models available to YOUR key
-                st.error(f"Actual Error: {e}")
-                st.write("Trying to find available models...")
+                # If flash fails, try the older Pro version automatically
                 try:
-                    models = [m.name for m in genai.list_models()]
-                    st.write("Your available models are:", models)
-                except:
-                    st.write("Could not list models. Please check if your API Key is active in Google AI Studio.")
+                    model = genai.GenerativeModel('gemini-pro')
+                    response = model.generate_content(f"Answer in simple Hindi: {user_q}")
+                    st.success(response.text)
+                    speak(response.text)
+                except Exception as e2:
+                    st.error(f"Connection Error. Please check your Google AI Studio project status. Error: {e2}")
+    else:
+        st.warning("Please enter a question.")

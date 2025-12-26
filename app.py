@@ -3,14 +3,16 @@ import google.generativeai as genai
 from gtts import gTTS
 import base64
 
-# This part connects to your saved Secret Key
-if "GEMINI_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
-else:
-    st.error("API Key not found in Secrets!")
+# Connect to Gemini safely using Secrets
+try:
+    if "GEMINI_API_KEY" in st.secrets:
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    else:
+        st.error("API Key not found in Secrets! Please check Step 1.")
+except Exception as e:
+    st.error(f"Setup Error: {e}")
 
-st.set_page_config(page_title="Village AI Expert", page_icon="🌾")
 st.title("🌾 Village AI Smart Expert")
 st.header("ग्रामीण एआई स्मार्ट विशेषज्ञ")
 
@@ -22,19 +24,19 @@ def speak(text):
     b64 = base64.b64encode(data).decode()
     st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
 
-user_q = st.text_input("Ask any question / कोई भी प्रश्न पूछें:", placeholder="जैसे: जैविक खेती कैसे करें?")
+user_q = st.text_input("Ask any question / कोई भी प्रश्न पूछें:")
 
 if st.button("Get Expert Answer / जवाब पाएं"):
     if user_q:
-        try:
-            with st.spinner("AI is thinking..."):
-                # This line asks the REAL Google Gemini AI for an answer
-                response = model.generate_content(f"You are a helpful village assistant. Answer this briefly in simple Hindi: {user_q}")
+        with st.spinner("AI is thinking..."):
+            try:
+                # Actual AI Call
+                response = model.generate_content(f"Answer simply in Hindi: {user_q}")
                 answer = response.text
-                
                 st.success(answer)
                 speak(answer)
-        except Exception as e:
-            st.error("I'm having trouble connecting to my global brain. Please refresh.")
+            except Exception as e:
+                # This will tell us the EXACT problem (e.g., "Invalid Key" or "Quota Exceeded")
+                st.error(f"Actual Error: {e}")
     else:
-        st.warning("Please type a question first.")
+        st.warning("Please type a question.")

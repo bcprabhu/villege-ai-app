@@ -16,16 +16,13 @@ except Exception:
 
 # --- 3. SETTINGS & CREATOR INFO ---
 st.sidebar.title("Settings / ಸಂಯೋಜನೆಗಳು")
-
 language_choice = st.sidebar.selectbox(
     "Choose Language / ಭಾಷೆಯನ್ನು ಆರಿಸಿ",
     ("Hindi", "English", "Marathi", "Telugu", "Tamil", "Kannada", "Bengali"),
-    index=5 # Defaults to Kannada
+    index=5
 )
-
 location = st.sidebar.text_input("Village/District (ಹಳ್ಳಿ/ಜಿಲ್ಲೆ):", value="Bengaluru")
 
-# --- CREATOR SIGNATURE ---
 st.sidebar.markdown("---")
 st.sidebar.write("👨‍🏫 **Created By:**")
 st.sidebar.write("**B.C. Prabhakar**")
@@ -54,30 +51,31 @@ def speak(text, lang_code):
 st.title("🚜 Village AI Super App")
 st.subheader("Your Digital Farming Expert / ನಿಮ್ಮ ಕೃಷಿ ತಜ್ಞ")
 
-with st.expander("📖 Instructions / ಸೂಚನೆಗಳು"):
-    st.write("1. Ask questions. 2. Take plant photos. 3. Check Mandi prices.")
-
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
 with tab1:
     user_q = st.text_input("Ask a question / ಪ್ರಶ್ನೆ ಕೇಳಿ:")
-    if st.button("Get Answer"):
+    if st.button("Get Answer", key="q_btn"):
         if user_q:
             with st.spinner("Thinking..."):
                 response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
                 st.success(response.text)
                 speak(response.text, language_choice)
+                # Download Button
+                st.download_button("📥 Download Report (ವರದಿ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ)", response.text, file_name="farming_advice.txt")
 
 with tab2:
     st.write("Upload or take a photo of a crop problem.")
     img_file = st.camera_input("Capture Crop Image")
     if img_file:
         img = Image.open(img_file)
-        if st.button("Analyze Plant"):
+        if st.button("Analyze Plant", key="p_btn"):
             with st.spinner("Analyzing..."):
                 response = model.generate_content([f"Identify the plant problem in this image and suggest a solution in {language_choice}.", img])
                 st.success(response.text)
                 speak(response.text, language_choice)
+                # Download Button
+                st.download_button("📥 Download Health Report", response.text, file_name="plant_health_report.txt")
 
 with tab3:
     st.header(f"Live Updates: {location}")
@@ -86,6 +84,7 @@ with tab3:
         if st.button("Mandi Prices"):
             response = model.generate_content(f"Give latest crop prices for {location} in {language_choice}.")
             st.info(response.text)
+            st.download_button("📥 Save Price List", response.text, file_name="mandi_prices.txt")
     with col2:
         if st.button("Weather Forecast"):
             response = model.generate_content(f"Give 2-day weather for {location} in {language_choice}.")

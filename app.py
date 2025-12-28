@@ -30,15 +30,15 @@ st.sidebar.write("**B.C. Prabhakar**")
 st.sidebar.caption("Freelance Oil and Gas Engineering Consultant")
 
 # --- WHATSAPP CONTACT BUTTON ---
-phone_number = "91XXXXXXXXXX" # Update with your real number
-message = urllib.parse.quote("Hello Mr. Prabhakar, I am using your Village AI App.")
+# Update the number below (91 followed by your 10-digit mobile number)
+phone_number = "91XXXXXXXXXX" 
+message = urllib.parse.quote("Hello Mr. Prabhakar, I am using your Village AI App and I have a question.")
 whatsapp_url = f"https://wa.me/{phone_number}?text={message}"
 st.sidebar.link_button("💬 Chat with me on WhatsApp", whatsapp_url)
 
 # --- 4. CONNECTIONS & LOGIC ---
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # We use 'gemini-1.5-flash' - it is the most stable for free tier
     model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     st.error("API Key missing in Secrets!")
@@ -59,15 +59,14 @@ def speak(text, lang_code):
 st.title("🚜 Village AI Super App")
 st.subheader("Your Digital Farming Expert / ನಿಮ್ಮ ಕೃಷಿ ತಜ್ಞ")
 
-# CREATE TABS
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
 with tab1:
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
-    st.info("Tap a button or type your question below. / ಒಂದು ಬಟನ್ ಒತ್ತಿ ಅಥವಾ ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ.")
+    st.info("Tap a button for instant help, or type your own question below.")
     
-    # BIG EASY BUTTONS FOR COMMON TASKS
     col1, col2 = st.columns(2)
+    # This logic allows buttons to 'fill' the text box automatically
     query = ""
 
     with col1:
@@ -88,8 +87,8 @@ with tab1:
 
     st.markdown("---")
     
-    # TYPING OPTION
-    user_q = st.text_input("Or type your own question (ಅಥವಾ ನಿಮ್ಮ ಸ್ವಂತ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
+    # User can still type ANY question here
+    user_q = st.text_input("Ask any other question (ನಿಮ್ಮ ಸ್ವಂತ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
     
     if st.button("Get Expert Answer / ಉತ್ತರ ಪಡೆಯಿರಿ", key="q_btn"):
         if user_q:
@@ -101,7 +100,7 @@ with tab1:
 
 with tab2:
     st.write("### 📸 Plant Doctor")
-    st.write("Upload or take a photo of a sick plant.")
+    st.write("Take a photo of a sick plant to get a diagnosis.")
     img_file = st.camera_input("Capture Crop Image")
     if img_file:
         img = Image.open(img_file)

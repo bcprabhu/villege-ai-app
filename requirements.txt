@@ -1,4 +1,1 @@
-streamlit
-gTTS
-google-generativeai
-Pillow
+streamlit-mic-recorder

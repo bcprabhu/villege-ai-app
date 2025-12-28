@@ -59,49 +59,49 @@ def speak(text, lang_code):
 st.title("🚜 Village AI Super App")
 st.subheader("Your Digital Farming Expert / ನಿಮ್ಮ ಕೃಷಿ ತಜ್ಞ")
 
+# CREATE TABS
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
 with tab1:
-    st.write("### Ask a Question / ಪ್ರಶ್ನೆ ಕೇಳಿ")
+    st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
+    st.info("Tap a button or type your question below. / ಒಂದು ಬಟನ್ ಒತ್ತಿ ಅಥವಾ ಕೆಳಗೆ ಟೈಪ್ ಮಾಡಿ.")
     
-    # 🎤 NATIVE VOICE RECORDING
-    audio_file = st.audio_input("Record your question (ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ರೆಕಾರ್ಡ್ ಮಾಡಿ)")
+    # BIG EASY BUTTONS FOR COMMON TASKS
+    col1, col2 = st.columns(2)
+    query = ""
 
-    if audio_file:
-        with st.spinner("Processing your voice..."):
-            try:
-                # Convert audio to bytes
-                audio_bytes = audio_file.getvalue()
-                
-                # Step 1: Send to Gemini for processing
-                response = model.generate_content([
-                    {"mime_type": "audio/wav", "data": audio_bytes},
-                    f"The user is speaking in {language_choice}. Identify their question and answer it clearly in {language_choice}."
-                ])
-                
-                if response.text:
-                    st.success(response.text)
-                    speak(response.text, language_choice)
-                    st.download_button("📥 Download Report", response.text, file_name="voice_report.txt")
-                else:
-                    st.warning("I couldn't hear clearly. Please try again or type.")
-            except Exception as e:
-                st.error("Voice processing is currently busy. Please try typing your question below!")
+    with col1:
+        if st.button("🌾 Rice/Paddy Tips (ಭತ್ತ)"):
+            query = "Give me 5 important tips for high yield in Paddy farming."
+        if st.button("🍅 Tomato Diseases (ಟೊಮೆಟೊ)"):
+            query = "What are the common diseases in Tomato and how to cure them?"
+        if st.button("🐛 Pest Control (ಕೀಟ ನಿಯಂತ್ರಣ)"):
+            query = "Suggest low-cost organic ways to control pests in the field."
+
+    with col2:
+        if st.button("💧 Save Water (ನೀರಾವರಿ)"):
+            query = "What are the best irrigation methods to save water for a small farmer?"
+        if st.button("🌱 Organic Fertilizer (ಗೊಬ್ಬರ)"):
+            query = "How to make high-quality organic fertilizer at home?"
+        if st.button("💰 Govt Schemes (ಸರಕಾರಿ ಯೋಜನೆಗಳು)"):
+            query = "Tell me about top 3 government schemes for small farmers in India."
 
     st.markdown("---")
     
-    # ⌨️ TYPING OPTION (Always works as a backup)
-    user_q = st.text_input("Or type here (ಅಥವಾ ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):")
-    if st.button("Get Answer", key="q_btn"):
+    # TYPING OPTION
+    user_q = st.text_input("Or type your own question (ಅಥವಾ ನಿಮ್ಮ ಸ್ವಂತ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
+    
+    if st.button("Get Expert Answer / ಉತ್ತರ ಪಡೆಯಿರಿ", key="q_btn"):
         if user_q:
             with st.spinner("Thinking..."):
                 response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
                 st.success(response.text)
                 speak(response.text, language_choice)
-                st.download_button("📥 Download Report", response.text, file_name="typing_report.txt")
+                st.download_button("📥 Save this Advice", response.text, file_name="farmer_advice.txt")
 
 with tab2:
-    st.write("Upload or take a photo of a crop problem.")
+    st.write("### 📸 Plant Doctor")
+    st.write("Upload or take a photo of a sick plant.")
     img_file = st.camera_input("Capture Crop Image")
     if img_file:
         img = Image.open(img_file)
@@ -110,11 +110,11 @@ with tab2:
                 response = model.generate_content([f"Identify the plant problem in this image and suggest a solution in {language_choice}.", img])
                 st.success(response.text)
                 speak(response.text, language_choice)
-                st.download_button("📥 Download Health Report", response.text, file_name="plant_report.txt")
 
 with tab3:
-    st.header(f"Live Updates: {location}")
-    if st.button("Get Mandi & Weather Updates"):
+    st.write("### 📊 Mandi & Weather")
+    st.header(f"Updates for: {location}")
+    if st.button("Get Live Updates"):
         with st.spinner("Fetching..."):
             response = model.generate_content(f"Give crop prices and 2-day weather for {location} in {language_choice}.")
             st.info(response.text)

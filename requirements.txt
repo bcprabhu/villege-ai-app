@@ -1,1 +1,4 @@
+google-generativeai
+gTTS
 streamlit-mic-recorder
+Pillow

@@ -70,15 +70,21 @@ with tab1:
 
     if audio_file:
         with st.spinner("Analyzing your voice..."):
-            audio_data = {"mime_type": "audio/wav", "data": audio_file.getvalue()}
+            # We convert the audio bytes into a format Gemini recognizes immediately
+            audio_bytes = audio_file.getvalue()
+            
+            # Using a slightly more robust model call for audio
             response = model.generate_content([
-                f"The user is a farmer speaking in {language_choice}. Please transcribe their question and answer clearly in {language_choice}.",
-                audio_data
+                {
+                    "mime_type": "audio/wav",
+                    "data": audio_bytes
+                },
+                f"The user is a farmer speaking in {language_choice}. Please transcribe their question and answer clearly in {language_choice}."
             ])
+            
             st.success(response.text)
             speak(response.text, language_choice)
             st.download_button("📥 Download Report", response.text, file_name="voice_advice.txt")
-
     st.markdown("---")
     
     # ⌨️ TYPING OPTION

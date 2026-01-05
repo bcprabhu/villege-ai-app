@@ -29,13 +29,12 @@ st.sidebar.write("👨‍🏫 **Created By:**")
 st.sidebar.write("**B.C. Prabhakar**")
 
 # --- 4. CONNECTIONS & LOGIC ---
-# This is the fix for the 404 error
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # We use 1.5-flash because it is the world leader for audio/voice apps
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # UPDATED: gemini-2.5-flash is the current workhorse model for 2026
+    model = genai.GenerativeModel('gemini-2.5-flash')
 else:
-    st.error("API Key missing in Secrets!")
+    st.error("API Key missing in Streamlit Secrets!")
 
 def speak(text, lang_code):
     try:
@@ -51,6 +50,7 @@ def speak(text, lang_code):
 
 # --- 5. MAIN CONTENT ---
 st.title("🚜 Village AI Super App")
+st.subheader("Digital Farming Expert / ನಿಮ್ಮ ಕೃಷಿ ತಜ್ಞ")
 
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
@@ -58,21 +58,22 @@ with tab1:
     st.write("### 🎤 Speak Your Question / ಮಾತನಾಡಿ")
     
     # Official stable audio input
-    audio_file = st.audio_input("Tap the mic and speak (3–5 seconds)")
+    audio_file = st.audio_input("Tap the mic and speak clearly (3–5 seconds)")
 
     if audio_file:
         with st.spinner("Analyzing your voice..."):
             try:
                 audio_bytes = audio_file.getvalue()
-                # Package audio for Gemini 1.5
+                # Multimodal request: Audio + Text instruction
                 response = model.generate_content([
-                    f"You are a helpful farming expert. Answer the user's question in {language_choice}.",
-                    {"mime_type": "audio/wav", "data": audio_bytes}
+                    {"mime_type": "audio/wav", "data": audio_bytes},
+                    f"Answer this farming question clearly in {language_choice}."
                 ])
-                st.success(response.text)
-                speak(response.text, language_choice)
+                if response.text:
+                    st.success(response.text)
+                    speak(response.text, language_choice)
             except Exception as e:
-                st.error("Voice processing error. Please use the buttons below.")
+                st.error(f"Voice Error: {str(e)[:50]}. Please use the buttons below.")
 
     st.markdown("---")
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
@@ -85,9 +86,14 @@ with tab1:
             query = "Give me 5 tips for high yield in Paddy farming."
         if st.button("🍅 Tomato Diseases"):
             query = "Common Tomato diseases and cures."
+        if st.button("🐛 Pest Control"):
+            query = "Organic ways to control pests."
+
     with col2:
         if st.button("💧 Save Water"):
             query = "Best irrigation methods to save water."
+        if st.button("🌱 Organic Fertilizer"):
+            query = "How to make organic fertilizer at home?"
         if st.button("💰 Govt Schemes"):
             query = "Top 3 government schemes for Indian farmers."
 
@@ -97,25 +103,35 @@ with tab1:
     if st.button("Get Answer", key="q_btn"):
         if user_q:
             with st.spinner("Thinking..."):
-                response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
-                st.success(response.text)
-                speak(response.text, language_choice)
+                try:
+                    response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
+                    st.success(response.text)
+                    speak(response.text, language_choice)
+                    st.download_button("📥 Save Advice", response.text, file_name="farmer_advice.txt")
+                except Exception as e:
+                    st.error("System is busy. Please try again in a moment.")
 
 with tab2:
     st.write("### 📸 Plant Doctor")
-    img_file = st.camera_input("Capture Crop Image")
+    img_file = st.camera_input("Take photo of a sick plant")
     if img_file:
         img = Image.open(img_file)
         if st.button("Analyze Plant"):
             with st.spinner("Analyzing..."):
-                response = model.generate_content([f"Identify the plant problem in this image and suggest a solution in {language_choice}.", img])
-                st.success(response.text)
-                speak(response.text, language_choice)
+                try:
+                    response = model.generate_content([f"Identify the plant problem and suggest a solution in {language_choice}.", img])
+                    st.success(response.text)
+                    speak(response.text, language_choice)
+                except:
+                    st.error("Could not analyze image. Try a clearer photo.")
 
 with tab3:
     st.write("### 📊 Mandi & Weather")
     st.header(f"Updates for: {location}")
     if st.button("Get Live Updates"):
         with st.spinner("Fetching..."):
-            response = model.generate_content(f"Give crop prices and 2-day weather for {location} in {language_choice}.")
-            st.info(response.text)
+            try:
+                response = model.generate_content(f"Give crop prices and 2-day weather for {location} in {language_choice}.")
+                st.info(response.text)
+            except:
+                st.error("Update failed. Try again later.")

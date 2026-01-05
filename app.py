@@ -63,32 +63,36 @@ tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & We
 with tab1:
     st.write("### 🎤 Speak Your Question / ಮಾತನಾಡಿ")
     
+    # Official Streamlit Audio Input
     audio_file = st.audio_input("Tap the mic to record")
 
     if audio_file:
-        with st.spinner("Translating your voice..."):
+        with st.spinner("Analyzing your voice..."):
             try:
-                # Direct conversion to ensure compatibility
-                audio_bytes = audio_file.getvalue()
+                # 1. Read the audio data
+                audio_data = audio_file.read()
                 
-                # Send to Gemini with a very specific instruction
-                response = model.generate_content([
+                # 2. Package it for the Gemini 'Flash' model
+                audio_parts = [
                     {
                         "mime_type": "audio/wav", 
-                        "data": audio_bytes
+                        "data": audio_data
                     },
-                    f"You are a helpful village assistant. Listen to this audio and answer the farmer's question clearly in {language_choice}."
-                ])
+                    f"You are a farming expert. Listen to this audio and answer the question clearly in {language_choice}."
+                ]
+                
+                # 3. Call the model
+                response = model.generate_content(audio_parts)
                 
                 if response.text:
                     st.success(response.text)
                     speak(response.text, language_choice)
-                else:
-                    st.warning("I heard you, but couldn't understand the words. Please speak closer to the mic.")
-                    
+                
             except Exception as e:
-                # This helps us see the real error in the logs if it fails
-                st.error("Connection glitch. Please try speaking again or use the buttons below.")
+                # This helps us see the exact technical error
+                st.error(f"Voice Error: {str(e)[:100]}")
+                st.info("Try a short 3-second recording, or use the buttons below.")
+
     st.markdown("---")
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
     
@@ -96,33 +100,31 @@ with tab1:
     query = ""
 
     with col1:
-        if st.button("🌾 Rice/Paddy Tips (ಭತ್ತ)"):
+        if st.button("🌾 Rice/Paddy Tips"):
             query = "Give me 5 important tips for high yield in Paddy farming."
-        if st.button("🍅 Tomato Diseases (ಟೊಮೆಟೊ)"):
+        if st.button("🍅 Tomato Diseases"):
             query = "What are the common diseases in Tomato and how to cure them?"
-        if st.button("🐛 Pest Control (ಕೀಟ ನಿಯಂತ್ರಣ)"):
+        if st.button("🐛 Pest Control"):
             query = "Suggest low-cost organic ways to control pests in the field."
 
     with col2:
-        if st.button("💧 Save Water (ನೀರಾವರಿ)"):
+        if st.button("💧 Save Water"):
             query = "What are the best irrigation methods to save water for a small farmer?"
-        if st.button("🌱 Organic Fertilizer (ಗೊಬ್ಬರ)"):
+        if st.button("🌱 Organic Fertilizer"):
             query = "How to make high-quality organic fertilizer at home?"
-        if st.button("💰 Govt Schemes (ಸರಕಾರಿ ಯೋಜನೆಗಳು)"):
+        if st.button("💰 Govt Schemes"):
             query = "Tell me about top 3 government schemes for small farmers in India."
 
     st.markdown("---")
     
     user_q = st.text_input("Or type here (ಅಥವಾ ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
     
-    if st.button("Get Answer / ಉತ್ತರ ಪಡೆಯಿರಿ", key="q_btn"):
+    if st.button("Get Answer", key="q_btn"):
         if user_q:
             with st.spinner("Thinking..."):
                 response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
                 st.success(response.text)
                 speak(response.text, language_choice)
-                st.download_button("📥 Save this Advice", response.text, file_name="farmer_advice.txt")
-
 with tab2:
     st.write("### 📸 Plant Doctor")
     img_file = st.camera_input("Capture Crop Image")

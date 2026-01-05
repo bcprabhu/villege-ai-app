@@ -84,35 +84,36 @@ tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & We
 # ---------- TAB 1: VOICE + TEXT ----------
 with tab1:
     st.write("### 🎤 Speak Your Question / ಮಾತನಾಡಿ")
-
-    # Audio input from microphone (Streamlit >= 1.29). [web:16][web:17]
-    audio_file = st.audio_input("Tap the mic and speak (3–5 seconds)")
+    
+    # Official Streamlit Audio Input
+    audio_file = st.audio_input("Tap the mic to record")
 
     if audio_file:
         with st.spinner("Analyzing your voice..."):
             try:
-                audio_bytes = audio_file.read()
-
-                # Gemini expects a list of parts: audio + text instruction. [web:21]
-                audio_parts = [
+                # 1. Get the raw audio bytes
+                audio_bytes = audio_file.getvalue()
+                
+                # 2. Use the 'parts' format which Gemini 1.5 Flash requires
+                contents = [
                     {
-                        "mime_type": "audio/mp3",   # Streamlit mic gives webm/ogg/mp3; mp3 works well. [web:21]
-                        "data": audio_bytes,
+                        "mime_type": "audio/wav",
+                        "data": audio_bytes
                     },
-                    f"You are a farming expert. Listen to this audio and answer clearly in {language_choice}.",
+                    f"Please listen to this farming question and answer in {language_choice}."
                 ]
-
-                response = model.generate_content(audio_parts)
-                answer = getattr(response, "text", "").strip()
-
-                if answer:
-                    st.success(answer)
-                    speak(answer, language_choice)
-                else:
-                    st.info("No answer came from the model. Please try again with a shorter question.")
+                
+                # 3. Request the response
+                response = model.generate_content(contents)
+                
+                if response.text:
+                    st.success(response.text)
+                    speak(response.text, language_choice)
+                
             except Exception as e:
-                st.error(f"Voice Error: {str(e)[:150]}")
-                st.info("Try a short 3–5 second recording, or use the quick buttons / typing below.")
+                # This will show us if the API Key is the problem or the Audio
+                st.error(f"System Message: {str(e)[:100]}")
+                st.info("Tip: Try recording a very short 2-second 'Hello' to test the connection.")
 
     st.markdown("---")
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")

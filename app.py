@@ -30,9 +30,8 @@ st.sidebar.write("**B.C. Prabhakar**")
 st.sidebar.caption("Freelance Oil and Gas Engineering Consultant")
 
 # --- WHATSAPP CONTACT BUTTON ---
-# Update the number below (91 followed by your 10-digit mobile number)
 phone_number = "91XXXXXXXXXX" 
-message = urllib.parse.quote("Hello Mr. Prabhakar, I am using your Village AI App and I have a question.")
+message = urllib.parse.quote("Hello Mr. Prabhakar, I am using your Village AI App.")
 whatsapp_url = f"https://wa.me/{phone_number}?text={message}"
 st.sidebar.link_button("💬 Chat with me on WhatsApp", whatsapp_url)
 
@@ -62,11 +61,30 @@ st.subheader("Your Digital Farming Expert / ನಿಮ್ಮ ಕೃಷಿ ತಜ�
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
 with tab1:
+    st.write("### 🎤 Speak Your Question / ಮಾತನಾಡಿ")
+    
+    # Official Streamlit Audio Input - Very stable for Mobile
+    audio_file = st.audio_input("Tap the mic to record (ರೆಕಾರ್ಡ್ ಮಾಡಲು ಮೈಕ್ ಟ್ಯಾಪ್ ಮಾಡಿ)")
+
+    if audio_file:
+        with st.spinner("Analyzing your voice..."):
+            try:
+                audio_bytes = audio_file.getvalue()
+                # Gemini processing the audio directly
+                response = model.generate_content([
+                    {"mime_type": "audio/wav", "data": audio_bytes},
+                    f"The user is a farmer speaking in {language_choice}. Answer the question clearly in {language_choice}."
+                ])
+                st.success(response.text)
+                speak(response.text, language_choice)
+                st.download_button("📥 Save Voice Advice", response.text, file_name="voice_advice.txt")
+            except Exception:
+                st.error("Voice processing is busy. Please try typing below!")
+
+    st.markdown("---")
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
-    st.info("Tap a button for instant help, or type your own question below.")
     
     col1, col2 = st.columns(2)
-    # This logic allows buttons to 'fill' the text box automatically
     query = ""
 
     with col1:
@@ -87,10 +105,9 @@ with tab1:
 
     st.markdown("---")
     
-    # User can still type ANY question here
-    user_q = st.text_input("Ask any other question (ನಿಮ್ಮ ಸ್ವಂತ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
+    user_q = st.text_input("Or type here (ಅಥವಾ ಇಲ್ಲಿ ಟೈಪ್ ಮಾಡಿ):", value=query)
     
-    if st.button("Get Expert Answer / ಉತ್ತರ ಪಡೆಯಿರಿ", key="q_btn"):
+    if st.button("Get Answer / ಉತ್ತರ ಪಡೆಯಿರಿ", key="q_btn"):
         if user_q:
             with st.spinner("Thinking..."):
                 response = model.generate_content(f"Answer simply in {language_choice}: {user_q}")
@@ -100,7 +117,6 @@ with tab1:
 
 with tab2:
     st.write("### 📸 Plant Doctor")
-    st.write("Take a photo of a sick plant to get a diagnosis.")
     img_file = st.camera_input("Capture Crop Image")
     if img_file:
         img = Image.open(img_file)

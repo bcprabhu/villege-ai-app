@@ -63,24 +63,32 @@ tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & We
 with tab1:
     st.write("### 🎤 Speak Your Question / ಮಾತನಾಡಿ")
     
-    # Official Streamlit Audio Input - Very stable for Mobile
-    audio_file = st.audio_input("Tap the mic to record (ರೆಕಾರ್ಡ್ ಮಾಡಲು ಮೈಕ್ ಟ್ಯಾಪ್ ಮಾಡಿ)")
+    audio_file = st.audio_input("Tap the mic to record")
 
     if audio_file:
-        with st.spinner("Analyzing your voice..."):
+        with st.spinner("Translating your voice..."):
             try:
+                # Direct conversion to ensure compatibility
                 audio_bytes = audio_file.getvalue()
-                # Gemini processing the audio directly
+                
+                # Send to Gemini with a very specific instruction
                 response = model.generate_content([
-                    {"mime_type": "audio/wav", "data": audio_bytes},
-                    f"The user is a farmer speaking in {language_choice}. Answer the question clearly in {language_choice}."
+                    {
+                        "mime_type": "audio/wav", 
+                        "data": audio_bytes
+                    },
+                    f"You are a helpful village assistant. Listen to this audio and answer the farmer's question clearly in {language_choice}."
                 ])
-                st.success(response.text)
-                speak(response.text, language_choice)
-                st.download_button("📥 Save Voice Advice", response.text, file_name="voice_advice.txt")
-            except Exception:
-                st.error("Voice processing is busy. Please try typing below!")
-
+                
+                if response.text:
+                    st.success(response.text)
+                    speak(response.text, language_choice)
+                else:
+                    st.warning("I heard you, but couldn't understand the words. Please speak closer to the mic.")
+                    
+            except Exception as e:
+                # This helps us see the real error in the logs if it fails
+                st.error("Connection glitch. Please try speaking again or use the buttons below.")
     st.markdown("---")
     st.write("### Quick Help / ತ್ವರಿತ ಸಹಾಯ")
     

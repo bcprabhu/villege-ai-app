@@ -7,7 +7,7 @@ import os
 import re
 import urllib.parse
 
-# --- 1. SET PAGE CONFIG (MUST BE AT THE VERY TOP) ---
+# --- 1. SET PAGE CONFIG ---
 st.set_page_config(
     page_title="Village AI Super App",
     page_icon="🚜",
@@ -24,18 +24,22 @@ language_choice = st.sidebar.selectbox(
 location = st.sidebar.text_input("Village/District:", value="Bengaluru")
 
 st.sidebar.markdown("---")
-# STOP VOICE BUTTON
 if st.sidebar.button("🛑 STOP VOICE (ಧ್ವನಿ ನಿಲ್ಲಿಸಿ)", use_container_width=True):
     st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.write("👨‍🏫 **Created By: B.C. Prabhakar**")
 
-# FEEDBACK BUTTON (Update your phone number here)
-phone_number = "91XXXXXXXXXX" 
-feedback_msg = urllib.parse.quote("ನಮಸ್ಕಾರ ಪ್ರಭಾಕರ್ ಅವರೇ, ನಿಮ್ಮ Village AI App ಬಗ್ಗೆ ನನ್ನ ಸಲಹೆ: ")
-feedback_url = f"https://wa.me/{phone_number}?text={feedback_msg}"
-st.sidebar.link_button("💬 Send Feedback (ಪ್ರತಿಕ್ರಿಯೆ)", feedback_url, use_container_width=True)
+# --- FEEDBACK BUTTON FIX ---
+# REPLACE THE NUMBER BELOW WITH YOUR ACTUAL 10-DIGIT NUMBER
+# Example: "919845012345"
+phone_number = "919449834721" 
+message_text = f"Hello Mr. Prabhakar, I am using your Village AI App in {language_choice}. Here is my feedback: "
+encoded_msg = urllib.parse.quote(message_text)
+# Updated WhatsApp link format to prevent 404 errors
+whatsapp_url = f"https://api.whatsapp.com/send?phone={phone_number}&text={encoded_msg}"
+
+st.sidebar.link_button("💬 Send Feedback (ಪ್ರತಿಕ್ರಿಯೆ)", whatsapp_url, use_container_width=True)
 
 # --- 3. PERSONALITY & VOICE CLEANING ---
 SYSTEM_PROMPT = f"""
@@ -57,7 +61,6 @@ else:
 
 def speak(text):
     try:
-        # CLEANING: Removes symbols so AI doesn't say "Nakshatra Chinne"
         clean_text = re.sub(r'[*#]', '', text)
         lang_map = {"Hindi": "hi", "English": "en", "Marathi": "mr", "Telugu": "te", "Tamil": "ta", "Kannada": "kn", "Bengali": "bn"}
         tts = gTTS(text=clean_text, lang=lang_map[language_choice])
@@ -71,7 +74,6 @@ def speak(text):
 
 # --- 4. MAIN INTERFACE ---
 st.title("🚜 Village AI Super App")
-st.caption("Empowering Farmers with Voice & Vision")
 
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
@@ -137,7 +139,6 @@ with tab2:
 
 with tab3:
     st.write("### 📊 Mandi Updates")
-    st.header(f"Updates for: {location}")
     if st.button("Get Live Updates"):
         with st.spinner("Fetching..."):
             response = model.generate_content(f"Crop prices and weather for {location} in 2 sentences.")

@@ -1,3 +1,8 @@
+st.set_page_config(
+    page_title="Village AI",
+    page_icon="🚜", # This will be the icon in the browser tab
+    layout="wide"
+)
 import streamlit as st
 import google.generativeai as genai
 from gtts import gTTS

@@ -5,15 +5,16 @@ import base64
 from PIL import Image
 import os
 import re
+import urllib.parse
 
-# --- 1. SET PAGE CONFIG (MUST BE FIRST) ---
+# --- 1. SET PAGE CONFIG (MUST BE AT THE VERY TOP) ---
 st.set_page_config(
     page_title="Village AI Super App",
     page_icon="🚜",
     layout="wide"
 )
 
-# --- 2. SIDEBAR & CONTROLS ---
+# --- 2. SIDEBAR & SETTINGS ---
 st.sidebar.title("Settings / ಸಂಯೋಜನೆಗಳು")
 language_choice = st.sidebar.selectbox(
     "Choose Language / ಭಾಷೆಯನ್ನು ಆರಿಸಿ",
@@ -23,19 +24,26 @@ language_choice = st.sidebar.selectbox(
 location = st.sidebar.text_input("Village/District:", value="Bengaluru")
 
 st.sidebar.markdown("---")
-# THE STOP BUTTON
+# STOP VOICE BUTTON
 if st.sidebar.button("🛑 STOP VOICE (ಧ್ವನಿ ನಿಲ್ಲಿಸಿ)", use_container_width=True):
     st.rerun()
 
+st.sidebar.markdown("---")
 st.sidebar.write("👨‍🏫 **Created By: B.C. Prabhakar**")
 
-# --- 3. PERSONALITY & VOICE LOGIC ---
+# FEEDBACK BUTTON (Update your phone number here)
+phone_number = "91XXXXXXXXXX" 
+feedback_msg = urllib.parse.quote("ನಮಸ್ಕಾರ ಪ್ರಭಾಕರ್ ಅವರೇ, ನಿಮ್ಮ Village AI App ಬಗ್ಗೆ ನನ್ನ ಸಲಹೆ: ")
+feedback_url = f"https://wa.me/{phone_number}?text={feedback_msg}"
+st.sidebar.link_button("💬 Send Feedback (ಪ್ರತಿಕ್ರಿಯೆ)", feedback_url, use_container_width=True)
+
+# --- 3. PERSONALITY & VOICE CLEANING ---
 SYSTEM_PROMPT = f"""
 You are a friendly, wise village farming expert. 
 1. Speak in {language_choice} only.
-2. IMPORTANT: Do NOT use any symbols like * or # or stars in your text.
-3. Keep answers very brief (max 2-3 sentences).
-4. No 'Nakshatra Chinne'. Speak like a normal human.
+2. IMPORTANT: Do NOT use any symbols like * or # or stars. 
+3. Be extremely brief (max 2-3 sentences).
+4. Speak like a human neighbor, avoid robotic words.
 """
 
 if "GEMINI_API_KEY" in st.secrets:
@@ -45,11 +53,11 @@ if "GEMINI_API_KEY" in st.secrets:
         system_instruction=SYSTEM_PROMPT
     )
 else:
-    st.error("API Key missing in Streamlit Secrets!")
+    st.error("API Key missing in Secrets!")
 
 def speak(text):
     try:
-        # CLEANING: Removes * and # so the AI doesn't say "Nakshatra Chinne"
+        # CLEANING: Removes symbols so AI doesn't say "Nakshatra Chinne"
         clean_text = re.sub(r'[*#]', '', text)
         lang_map = {"Hindi": "hi", "English": "en", "Marathi": "mr", "Telugu": "te", "Tamil": "ta", "Kannada": "kn", "Bengali": "bn"}
         tts = gTTS(text=clean_text, lang=lang_map[language_choice])
@@ -63,12 +71,13 @@ def speak(text):
 
 # --- 4. MAIN INTERFACE ---
 st.title("🚜 Village AI Super App")
+st.caption("Empowering Farmers with Voice & Vision")
 
 tab1, tab2, tab3 = st.tabs(["💬 Ask AI", "📸 Plant Doctor", "📊 Mandi & Weather"])
 
 with tab1:
-    st.write("### 🎤 Talk to your Expert")
-    audio_file = st.audio_input("Tap the mic and speak")
+    st.write("### 🎤 Talk to Expert (ಮಾತನಾಡಿ)")
+    audio_file = st.audio_input("Tap the mic and speak clearly")
 
     if audio_file:
         with st.spinner("Listening..."):
@@ -81,7 +90,7 @@ with tab1:
                 st.chat_message("assistant").write(response.text)
                 speak(response.text)
             except:
-                st.error("Connection error. Try again.")
+                st.error("Error hearing voice. Please try typing.")
 
     st.markdown("---")
     st.write("### 💡 Quick Help / ತ್ವರಿತ ಸಹಾಯ")
@@ -117,20 +126,20 @@ with tab1:
 
 with tab2:
     st.write("### 📸 Plant Doctor")
-    img_file = st.camera_input("Capture Crop Image")
+    img_file = st.camera_input("Take photo of crop")
     if img_file:
         img = Image.open(img_file)
-        if st.button("Analyze Plant"):
+        if st.button("Check My Crop"):
             with st.spinner("Analyzing..."):
-                response = model.generate_content(["Identify the problem and solution in 2 sentences.", img])
-                st.success(response.text)
+                response = model.generate_content(["Identify this problem in 2 sentences.", img])
+                st.info(response.text)
                 speak(response.text)
 
 with tab3:
-    st.write("### 📊 Mandi & Weather")
+    st.write("### 📊 Mandi Updates")
     st.header(f"Updates for: {location}")
     if st.button("Get Live Updates"):
         with st.spinner("Fetching..."):
             response = model.generate_content(f"Crop prices and weather for {location} in 2 sentences.")
-            st.info(response.text)
+            st.success(response.text)
             speak(response.text)
